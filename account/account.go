@@ -1,31 +1,33 @@
 package account
 
 import (
+	
 	"errors"
 	"math/rand/v2"
 	"net/url"
 	"time"
-    "github.com/fatih/color"
+
+	"github.com/fatih/color"
 )
 
 var letterRunes = []rune("asdfghjklzxcvbnmqwertyuiopASDFGHJKLZXCVBNMQWERTYUIOP")
 
 type Account struct {
-    login string
-    password string
-    url string
+    Login string `json:"login"`
+    Password string `json:"password"`
+    Url string`json:"url"`
 }
 
-type accountwithTimeStamp struct {
-     createdAt time.Time
-     updatedAt time.Time
+type AccountwithTimeStamp struct {
+     CreatedAt time.Time `json:"createdAt"`
+     UpdatedAt time.Time`json:"updatedAt"`
      Account
 }
 
 func (acc *Account) OutputPassword() {
-    color.Yellow(acc.login)
-    color.Yellow(acc.password)
-    color.Yellow(acc.url)
+    color.Yellow(acc.Login)
+    color.Yellow(acc.Password)
+    color.Yellow(acc.Url)
 
 }
 
@@ -34,10 +36,10 @@ func (acc *Account) generatePassword(n int) {
     for i  := range password {
         password[i] = letterRunes[rand.IntN(len(letterRunes))]
     }
-    acc.password = string(password)
+    acc.Password = string(password)
 }
 
-func NewAccountwithTimeStamp(login, password, urlString string) (*accountwithTimeStamp, error) {
+func NewAccountwithTimeStamp(login, password, urlString string) (*AccountwithTimeStamp, error) {
     if login == ""{
         return nil, errors.New("invalid Login")
     }
@@ -45,17 +47,17 @@ func NewAccountwithTimeStamp(login, password, urlString string) (*accountwithTim
     if err != nil {
         return nil, errors.New("invalid URL")
     }
-    newAccountwithTimeStamp := &accountwithTimeStamp{
-        createdAt: time.Now(),
-        updatedAt: time.Now(),
+    newAccountwithTimeStamp := &AccountwithTimeStamp{
+        CreatedAt: time.Now(),
+        UpdatedAt: time.Now(),
         Account: Account{
-        login: login,
-        password: password,
-        url: urlString,
+        Login: login,
+        Password: password,
+        Url: urlString,
         },
     }
 
-    if newAccountwithTimeStamp.password == "" {
+    if newAccountwithTimeStamp.Password == "" {
         newAccountwithTimeStamp.generatePassword(12)
     }
     return newAccountwithTimeStamp, nil
