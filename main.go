@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+    "errors"
 	"math/rand/v2"
+    "net/url"
 )
        
 
@@ -25,19 +27,32 @@ func (acc *account) generatePassword(n int) {
     acc.password = string(password)
 }
 
+func newAccount(login, password, urlString string) (*account, error) {
+    _ , err := url.ParseRequestURI(urlString)
+    if err != nil {
+        return nil, errors.New("invalid URL")
+    }
+    return &account{
+        login: login,
+        password: password,
+        url: urlString,
+    }, nil
+
+}
+
 var letterRunes = []rune("asdfghjklzxcvbnmqwertyuiopASDFGHJKLZXCVBNMQWERTYUIOP")
 
 func main(){
     login := promtData("Введите логин:")
-    //password := promtData("Введите пароль:")
+    password := promtData("Введите пароль:")
     url := promtData("Введите URL:")
     
-    myAccount := account{
-        login: login,
-        //password: password,
-        url: url,
+  
+    myAccount, err := newAccount(login, password, url)
+    if err != nil {
+        fmt.Println("Неверный формат URL")
+        return
     }
-
     myAccount.generatePassword(12)
     myAccount.outputPassword()
 	
