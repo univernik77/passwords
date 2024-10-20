@@ -6,7 +6,6 @@ import (
 	"math/rand/v2"
 	"net/url"
 	"time"
-
 	"github.com/fatih/color"
 )
 
@@ -24,7 +23,7 @@ type AccountwithTimeStamp struct {
      Account
 }
 
-func (acc *Account) OutputPassword() {
+func (acc *Account) Output() {
     color.Yellow(acc.Login)
     color.Yellow(acc.Password)
     color.Yellow(acc.Url)
