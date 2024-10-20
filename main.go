@@ -1,10 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-    "errors"
 	"math/rand/v2"
-    "net/url"
+	"net/url"
+	"time"
 )
        
 
@@ -12,6 +13,12 @@ type account struct {
     login string
     password string
     url string
+}
+
+type accountwithTimeStamp struct {
+     createdAt time.Time
+     updatedAt time.Time
+     account
 }
 
 func (acc *account) outputPassword() {
@@ -27,16 +34,28 @@ func (acc *account) generatePassword(n int) {
     acc.password = string(password)
 }
 
-func newAccount(login, password, urlString string) (*account, error) {
+func newAccountwithTimeStamp(login, password, urlString string) (*accountwithTimeStamp, error) {
+    if login == ""{
+        return nil, errors.New("invalid Login")
+    }
     _ , err := url.ParseRequestURI(urlString)
     if err != nil {
         return nil, errors.New("invalid URL")
     }
-    return &account{
+    newAccountwithTimeStamp := &accountwithTimeStamp{
+        createdAt: time.Now(),
+        updatedAt: time.Now(),
+        account: account{
         login: login,
         password: password,
         url: urlString,
-    }, nil
+        },
+    }
+
+    if newAccountwithTimeStamp.password == "" {
+        newAccountwithTimeStamp.generatePassword(12)
+    }
+    return newAccountwithTimeStamp, nil
 
 }
 
@@ -48,9 +67,9 @@ func main(){
     url := promtData("Введите URL:")
     
   
-    myAccount, err := newAccount(login, password, url)
+    myAccount, err := newAccountwithTimeStamp(login, password, url)
     if err != nil {
-        fmt.Println("Неверный формат URL")
+        fmt.Println("Неверный формат URL или Логин")
         return
     }
     myAccount.generatePassword(12)
@@ -61,7 +80,7 @@ func main(){
 func promtData(promt string) string {
     fmt.Print(promt + " ")
     var res string
-    fmt.Scan(&res)
+    fmt.Scanln(&res)
     return res
 }
 
