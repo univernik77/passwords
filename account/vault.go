@@ -1,42 +1,70 @@
 package account
 
 import (
-	"demo/password/files"
 	"encoding/json"
 	"strings"
 	"time"
 	"github.com/fatih/color"
 )
 
+type ByteReader interface{
+	Read() ([]byte, error)
+}
 
+type ByteWriter interface{
+	Write([]byte)
+}
+
+
+type Db interface {
+	ByteReader
+	ByteWriter
+}
 type Vault struct {
 	Accounts []AccountwithTimeStamp`json:"accounts"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func NewVault() *Vault {
-	file, err :=  files.ReadFile("data.json")
-	if err != nil {
-		return &Vault{
-		Accounts: []AccountwithTimeStamp{},
-		UpdatedAt: time.Now(),
-	}
+type VaultWithDb struct {
+	Vault
+	db Db
+}
 
+func NewVault(db Db) *VaultWithDb {
+	file, err :=  db.Read()
+	if err != nil {
+		return &VaultWithDb{
+			Vault: Vault{
+				Accounts: []AccountwithTimeStamp{},
+				UpdatedAt: time.Now(),
+			},
+			db: db,
+		}
 	}
 	var vault Vault
 	err = json.Unmarshal(file, &vault)  
 	if err != nil {
 		color.Red(err.Error())
+		return &VaultWithDb{
+			Vault: Vault{
+				Accounts: []AccountwithTimeStamp{},
+				UpdatedAt: time.Now(),
+			},
+			db: db,
+		}
 	}
-	return &vault
+	return &VaultWithDb{
+			Vault: vault,
+			db: db,
+		}
 }
 
-func (vault *Vault) AddAccount(acc AccountwithTimeStamp){
+func (vault *VaultWithDb) AddAccount(acc AccountwithTimeStamp){
 	vault.Accounts =  append(vault.Accounts, acc)
 	vault.save()
 }
 
-func (vault *Vault) FindAccountbyUrl(url string) []AccountwithTimeStamp {
+func (vault *VaultWithDb) FindAccountbyUrl(url string) []AccountwithTimeStamp {
 	var accounts []AccountwithTimeStamp
 	for _, account := range vault.Accounts{
 		isMatched := strings.Contains(account.Url, url)
@@ -47,7 +75,7 @@ func (vault *Vault) FindAccountbyUrl(url string) []AccountwithTimeStamp {
 	return accounts
 }
 
-func (vault *Vault) DeleteAccountbyUrl(url string) bool {
+func (vault *VaultWithDb) DeleteAccountbyUrl(url string) bool {
 	var accounts []AccountwithTimeStamp
 	isDelete := false
 	for _, account := range vault.Accounts{
@@ -70,11 +98,12 @@ func (vault *Vault) ToBytes() ([]byte, error){
     return file, nil
 }
 
-func (vault *Vault) save() {
+func (vault *VaultWithDb) save() {
 	vault.UpdatedAt = time.Now()
-	data, err := vault.ToBytes()
+	data, err := vault.Vault.ToBytes()
 	if err != nil {
 		color.Red(err.Error())
 	}
-	files.WriteFile(data, "data.json")
+	vault.db.Write(data)
+	
 }
