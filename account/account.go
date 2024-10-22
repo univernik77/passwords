@@ -1,7 +1,6 @@
 package account
 
 import (
-	
 	"errors"
 	"math/rand/v2"
 	"net/url"
@@ -27,7 +26,6 @@ func (acc *Account) Output() {
     color.Yellow(acc.Login)
     color.Yellow(acc.Password)
     color.Yellow(acc.Url)
-
 }
 
 func (acc *Account) generatePassword(n int) {

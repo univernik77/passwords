@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
-	"github.com/fatih/color"
+	"demo/password/output"
 )
 
 type ByteReader interface{
@@ -44,7 +44,7 @@ func NewVault(db Db) *VaultWithDb {
 	var vault Vault
 	err = json.Unmarshal(file, &vault)  
 	if err != nil {
-		color.Red(err.Error())
+		output.PrintError(err)
 		return &VaultWithDb{
 			Vault: Vault{
 				Accounts: []AccountwithTimeStamp{},
@@ -102,7 +102,7 @@ func (vault *VaultWithDb) save() {
 	vault.UpdatedAt = time.Now()
 	data, err := vault.Vault.ToBytes()
 	if err != nil {
-		color.Red(err.Error())
+		output.PrintError(err)
 	}
 	vault.db.Write(data)
 	
