@@ -5,39 +5,43 @@ import (
 	"demo/password/files"
 	"demo/password/output"
 	"fmt"
+	"strings"
 	"github.com/fatih/color"
 )
-       
+
+var menuVariants = []string{
+    "1. Создать аккаунт",
+    "2. Найти аккаунт по URL",
+    "3. Найти аккаунт по логину",
+    "4. Удалить аккаунт",
+    "5. Выход ",
+    "Выберите вариант",
+}
+
+var menu = map[string]func(*account.VaultWithDb) {
+    "1":createAccount,
+    "2":findAccountbyUrl,
+    "3":findAccountbyLogin,
+    "4":deleteAccount,
+}
 func main(){
     fmt.Println("__Менеджер паролей__")
     vault := account.NewVault(files.NewJsonDb("data.json"))
 Menu:
     for {
-        variant := promtData([]string{
-            "Выберите вариант",
-            "1. Создать аккаунт",
-            "2. Найти аккаунт",
-            "3. Удалить аккаунт",
-            "4. Выход ",
-            "Выберите вариант",
-        })
-        switch variant{
-        case "1":
-            createAccount(vault)
-        case "2":
-            findAccount(vault)
-        case "3":
-            deleteAccount(vault)
-        default:
+        variant := promtData(menuVariants...)
+        menuFunc := menu[variant]
+        if menuFunc == nil {
             break Menu
         }
+        menuFunc(vault)
     }
 }
 
 func createAccount(vault *account.VaultWithDb){
-    login := promtData([]string{"Введите логин"})
-    password := promtData([]string{"Введите пароль"})
-    url := promtData([]string{"Введите URL"})
+    login := promtData("Введите логин")
+    password := promtData("Введите пароль")
+    url := promtData("Введите URL")
     
   
     myAccount, err := account.NewAccountwithTimeStamp(login, password, url)
@@ -49,22 +53,36 @@ func createAccount(vault *account.VaultWithDb){
     
 }
 
-func findAccount(vault *account.VaultWithDb) {
-    url := promtData([]string{"Введите url для поиска"})
-    accounts := vault.FindAccountbyUrl(url)
+func findAccountbyUrl(vault *account.VaultWithDb) {
+    url := promtData("Введите url для поиска")
+    accounts := vault.FindAccount(url, func (acc account.AccountwithTimeStamp, str string) bool {
+    return strings.Contains(acc.Url, str)
+    })
+    outputResult(&accounts)
+} 
 
-    if len(accounts) == 0 {
+
+func findAccountbyLogin(vault *account.VaultWithDb) {
+    login := promtData("Введите login для поиска")
+    accounts := vault.FindAccount(login, func (acc account.AccountwithTimeStamp, str string) bool {
+    return strings.Contains(acc.Login, str)
+    })
+    outputResult(&accounts)
+}
+
+func outputResult(accounts *[]account.AccountwithTimeStamp) {
+     if len(*accounts) == 0 {
         output.PrintError("Аккаунтов не найдено")
     } 
-    for _, account := range accounts {
+    for _, account := range *accounts {
         account.Output()
     } 
 }
 
 func deleteAccount(vault *account.VaultWithDb){
-    url := promtData([]string{"Введите url для удаления"})
+    url := promtData("Введите url для удаления")
     isDelete := vault.DeleteAccountbyUrl(url)
-    
+
     if isDelete {
         color.Green("Удалено")
     } 
@@ -72,7 +90,7 @@ func deleteAccount(vault *account.VaultWithDb){
 
 }
 
-func promtData[T any](promt []T) string {
+func promtData(promt ...string) string {
     for i, line := range promt {
         if i == len(promt)-1{
             fmt.Printf("%v: ", line)
